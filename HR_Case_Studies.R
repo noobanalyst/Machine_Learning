@@ -1,4 +1,8 @@
 library(ggplot2)
+library(gmodels)
+library(caret)
+library(randomForest)
+
 
 # Loading the data into a data frame
 hr_data <- read.csv("HR_comma_sep.csv")
@@ -37,3 +41,16 @@ by(hr_data$average_montly_hours,hr_data$salary,summary)
 
 prop.table(table(hr_data$left))*100
 # Of total 14999 people, around 23% of people have left the organisation
+
+hr_model <- randomForest(hr_train[-7],hr_train$left,importance = TRUE)
+imp <-importance(hr_model,type=1)
+fimp<-data.frame(Feature=row.names(imp), Importance=imp[,1])
+ggplot(fimp, aes(x=reorder(Feature, Importance), y=Importance, fill=Importance)) +
+  geom_bar(stat="identity") +
+  coord_flip()+
+  xlab("") +
+  ylab("Importance")
+
+hr_predict <- predict(hr_model,hr_test)
+# CrossTable(hr_test$left, hr_predict, prop.r = FALSE,prop.c = FALSE,prop.chisq = FALSE,dnn = c("Actual","Predicted"))
+confusionMatrix(hr_test$left, hr_predict, positive = 'Yes')
